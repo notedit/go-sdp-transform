@@ -215,5 +215,78 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 			FormatFunc: nil,
 		},
 		// a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:PS1uQCVeeCFCanVmcjkpPywjNWhcYD0mXXtxaVBR|2^20|1:32
+		&Rule{
+			Name:       "",
+			Push:       "crypto",
+			Reg:        regexp.MustCompile("^crypto:(\\d*) ([\\w_]*) (\\S*)(?: (\\S*))?"),
+			Names:      []string{"id", "suite", "config", "sessionConfig"},
+			Types:      []rune{'d', 's', 's', 's'},
+			Format:     "",
+			FormatFunc: nil,
+		},
+		// a=setup:actpass
+		&Rule{
+			Name:   "setup",
+			Push:   "",
+			Reg:    regexp.MustCompile("^setup:(\\w*)"),
+			Names:  []string{},
+			Types:  []rune{'s'},
+			Format: "setup:%s",
+		},
+		// a=mid:1
+		&Rule{
+			Name:   "mid",
+			Push:   "",
+			Reg:    regexp.MustCompile("^mid:([^\\s]*)"),
+			Names:  []string{},
+			Types:  []rune{'s'},
+			Format: "mid:%s",
+		},
+		// a=msid:0c8b064d-d807-43b4-b434-f92a889d8587 98178685-d409-46e0-8e16-7ef0db0db64a
+		&Rule{
+			Name:   "msid",
+			Push:   "",
+			Reg:    regexp.MustCompile("^msid:(.*)"),
+			Names:  []string{},
+			Types:  []rune{'s'},
+			Format: "msid:%s",
+		},
+		// a=ptime:20
+		&Rule{
+			Name:   "ptime",
+			Push:   "",
+			Reg:    regexp.MustCompile("^ptime:(\\d*)"),
+			Names:  []string{},
+			Types:  []rune{'d'},
+			Format: "ptime:%d",
+		},
+		// a=maxptime:60
+		&Rule{
+			Name:   "maxptime",
+			Push:   "",
+			Reg:    regexp.MustCompile("^maxptime:(\\d*)"),
+			Names:  []string{},
+			Types:  []rune{'d'},
+			Format: "maxptime:%d",
+		},
+		// a=sendrecv
+		&Rule{
+			Name:   "direction",
+			Push:   "",
+			Reg:    regexp.MustCompile("^(sendrecv|recvonly|sendonly|inactive)"),
+			Names:  []string{},
+			Types:  []rune{'s'},
+			Format: "%s",
+		},
+		// a=ice-lite
+		&Rule{
+			Name:   "icelite",
+			Push:   "",
+			Reg:    regexp.MustCompile("^(ice-lite)"),
+			Names:  []string{},
+			Types:  []rune{'s'},
+			Format: "%s",
+		},
+		// a=ice-ufrag:F7gI
 	},
 }
