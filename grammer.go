@@ -166,13 +166,25 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 	},
 	'a': []*Rule{ // a=rtpmap:110 opus/48000/2
 		&Rule{
-			Name:       "",
-			Push:       "rtp",
-			Reg:        regexp.MustCompile("^rtpmap:(\\d*) ([\\w\\-\\.]*)(?:\\s*\\/(\\d*)(?:\\s*\\/(\\S*))?)?"),
-			Names:      []string{"playload", "codec", "rate", "encoding"},
-			Types:      []rune{'d', 's', 'd', 's'},
-			Format:     "",
-			FormatFunc: nil,
+			Name:   "",
+			Push:   "rtp",
+			Reg:    regexp.MustCompile("^rtpmap:(\\d*) ([\\w\\-\\.]*)(?:\\s*\\/(\\d*)(?:\\s*\\/(\\S*))?)?"),
+			Names:  []string{"playload", "codec", "rate", "encoding"},
+			Types:  []rune{'d', 's', 'd', 's'},
+			Format: "",
+			FormatFunc: func(obj *json.Json) string {
+				var ret string
+				if hasValue(obj, "encoding") {
+					ret = "rtpmap:%d %s/%s/%s"
+				} else {
+					if hasValue(obj, "rate") {
+						ret = "rtpmap:%d %s/%s"
+					} else {
+						ret = "rtpmap:%d %s"
+					}
+				}
+				return ret
+			},
 		},
 		// a=fmtp:108 profile-level-id=24;object=23;bitrate=64000
 		// a=fmtp:111 minptime=10; useinbandfec=1
@@ -195,13 +207,19 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 		},
 		// a=rtcp:65179 IN IP4 193.84.77.194
 		&Rule{
-			Name:       "rtcp",
-			Push:       "",
-			Reg:        regexp.MustCompile("^rtcp:(\\d*)(?: (\\S*) IP(\\d) (\\S*))?"),
-			Names:      []string{"port", "netType", "ipVer", "address"},
-			Types:      []rune{'d', 's', 'd', 's'},
-			Format:     "",
-			FormatFunc: nil,
+			Name:   "rtcp",
+			Push:   "",
+			Reg:    regexp.MustCompile("^rtcp:(\\d*)(?: (\\S*) IP(\\d) (\\S*))?"),
+			Names:  []string{"port", "netType", "ipVer", "address"},
+			Types:  []rune{'d', 's', 'd', 's'},
+			Format: "",
+			FormatFunc: func(obj *json.Json) string {
+				if hasValue(obj, "address") {
+					return "rtcp:%d %s IP%d %s"
+				} else {
+					return "rtcp:%d"
+				}
+			},
 		},
 		// a=rtcp-fb:98 trr-int 100
 		&Rule{
@@ -214,34 +232,58 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 		},
 		// a=rtcp-fb:98 nack rpsi
 		&Rule{
-			Name:       "",
-			Push:       "rtcpFb",
-			Reg:        regexp.MustCompile("^rtcp-fb:(\\*|\\d*) ([\\w\\-_]*)(?: ([\\w\\-_]*))?"),
-			Names:      []string{"payload", "type", "subtype"},
-			Types:      []rune{'s', 's', 's'},
-			Format:     "",
-			FormatFunc: nil,
+			Name:   "",
+			Push:   "rtcpFb",
+			Reg:    regexp.MustCompile("^rtcp-fb:(\\*|\\d*) ([\\w\\-_]*)(?: ([\\w\\-_]*))?"),
+			Names:  []string{"payload", "type", "subtype"},
+			Types:  []rune{'s', 's', 's'},
+			Format: "",
+			FormatFunc: func(obj *json.Json) string {
+				if hasValue(obj, "subtype") {
+					return "rtcp-fb:%s %s %s"
+				} else {
+					return "rtcp-fb:%s %s"
+				}
+			},
 		},
 		// a=extmap:2 urn:ietf:params:rtp-hdrext:toffset
 		// a=extmap:1/recvonly URI-gps-string
 		&Rule{
-			Name:       "",
-			Push:       "ext",
-			Reg:        regexp.MustCompile("^extmap:(\\d+)(?:\\/(\\w+))? (\\S*)(?: (\\S*))?"),
-			Names:      []string{"value", "direction", "uri", "config"},
-			Types:      []rune{'d', 's', 's', 's'},
-			Format:     "",
-			FormatFunc: nil,
+			Name:   "",
+			Push:   "ext",
+			Reg:    regexp.MustCompile("^extmap:(\\d+)(?:\\/(\\w+))? (\\S*)(?: (\\S*))?"),
+			Names:  []string{"value", "direction", "uri", "config"},
+			Types:  []rune{'d', 's', 's', 's'},
+			Format: "",
+			FormatFunc: func(obj *json.Json) string {
+				ret := "extmap:%d"
+				if hasValue(obj, "direction") {
+					ret = ret + "/%s"
+				} else {
+					ret = ret + "%v"
+				}
+				ret = ret + " %s"
+				if hasValue(obj, "config") {
+					ret = ret + " %s"
+				}
+				return ret
+			},
 		},
 		// a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:PS1uQCVeeCFCanVmcjkpPywjNWhcYD0mXXtxaVBR|2^20|1:32
 		&Rule{
-			Name:       "",
-			Push:       "crypto",
-			Reg:        regexp.MustCompile("^crypto:(\\d*) ([\\w_]*) (\\S*)(?: (\\S*))?"),
-			Names:      []string{"id", "suite", "config", "sessionConfig"},
-			Types:      []rune{'d', 's', 's', 's'},
-			Format:     "",
-			FormatFunc: nil,
+			Name:   "",
+			Push:   "crypto",
+			Reg:    regexp.MustCompile("^crypto:(\\d*) ([\\w_]*) (\\S*)(?: (\\S*))?"),
+			Names:  []string{"id", "suite", "config", "sessionConfig"},
+			Types:  []rune{'d', 's', 's', 's'},
+			Format: "",
+			FormatFunc: func(obj *json.Json) string {
+				if hasValue(obj, "sessionConfig") {
+					return "crypto:%d %s %s %s"
+				} else {
+					return "crypto:%d %s %s"
+				}
+			},
 		},
 		// a=setup:actpass
 		&Rule{
@@ -339,13 +381,39 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 		// a=candidate:229815620 1 tcp 1518280447 192.168.150.19 60017 typ host tcptype active generation 0 network-id 3 network-cost 10
 		// a=candidate:3289912957 2 tcp 1845501695 193.84.77.194 60017 typ srflx raddr 192.168.34.75 rport 60017 tcptype passive generation 0 network-id 3 network-cost 10
 		&Rule{
-			Name:       "",
-			Push:       "candidates",
-			Reg:        regexp.MustCompile("^candidate:(\\S*) (\\d*) (\\S*) (\\d*) (\\S*) (\\d*) typ (\\S*)(?: raddr (\\S*) rport (\\d*))?(?: tcptype (\\S*))?(?: generation (\\d*))?(?: network-id (\\d*))?(?: network-cost (\\d*))?"),
-			Names:      []string{"foundation", "component", "transport", "priority", "ip", "port", "type", "raddr", "rport", "tcptype", "generation", "network-id", "network-cost"},
-			Types:      []rune{'s', 'd', 's', 'd', 's', 'd', 's', 's', 'd', 's', 'd', 'd', 'd', 'd'},
-			Format:     "",
-			FormatFunc: nil,
+			Name:   "",
+			Push:   "candidates",
+			Reg:    regexp.MustCompile("^candidate:(\\S*) (\\d*) (\\S*) (\\d*) (\\S*) (\\d*) typ (\\S*)(?: raddr (\\S*) rport (\\d*))?(?: tcptype (\\S*))?(?: generation (\\d*))?(?: network-id (\\d*))?(?: network-cost (\\d*))?"),
+			Names:  []string{"foundation", "component", "transport", "priority", "ip", "port", "type", "raddr", "rport", "tcptype", "generation", "network-id", "network-cost"},
+			Types:  []rune{'s', 'd', 's', 'd', 's', 'd', 's', 's', 'd', 's', 'd', 'd', 'd', 'd'},
+			Format: "",
+			FormatFunc: func(obj *json.Json) string {
+				ret := "candidate:%s %d %s %d %s %d typ %s"
+				if hasValue(obj, "raddr") {
+					ret = ret + " raddr %s rport %d"
+				} else {
+					ret = ret + "%v%v"
+				}
+				if hasValue(obj, "tcptype") {
+					ret = ret + " tcptype %s"
+				} else {
+					ret = ret + "%v"
+				}
+				if hasValue(obj, "generation") {
+					ret = ret + " generation %d"
+				}
+				if hasValue(obj, "network-id") {
+					ret = ret + " network-id %d"
+				} else {
+					ret = ret + "%v"
+				}
+				if hasValue(obj, "network-cost") {
+					ret = ret + " network-cost %d"
+				} else {
+					ret = ret + "%v"
+				}
+				return ret
+			},
 		},
 		// a=end-of-candidates
 		&Rule{
@@ -376,13 +444,22 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 		},
 		// a=ssrc:2566107569 cname:t9YU8M1UxTF8Y1A1
 		&Rule{
-			Name:       "",
-			Push:       "ssrcs",
-			Reg:        regexp.MustCompile("^ssrc:(\\d*) ([\\w_-]*)(?::(.*))?"),
-			Names:      []string{"id", "attribute", "value"},
-			Types:      []rune{'d', 's', 's'},
-			Format:     "",
-			FormatFunc: nil,
+			Name:   "",
+			Push:   "ssrcs",
+			Reg:    regexp.MustCompile("^ssrc:(\\d*) ([\\w_-]*)(?::(.*))?"),
+			Names:  []string{"id", "attribute", "value"},
+			Types:  []rune{'d', 's', 's'},
+			Format: "",
+			FormatFunc: func(obj *json.Json) string {
+				ret := "ssrc:%d"
+				if hasValue(obj, "attribute") {
+					ret = ret + " %s"
+					if hasValue(obj, "value") {
+						ret = ret + ":%s"
+					}
+				}
+				return ret
+			},
 		},
 		// a=ssrc-group:FEC 1 2
 		// a=ssrc-group:FEC-FR 3004364195 1080772241
@@ -432,13 +509,19 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 		},
 		// a=sctpmap:5000 webrtc-datachannel 1024
 		&Rule{
-			Name:       "sctpmap",
-			Push:       "",
-			Reg:        regexp.MustCompile("^sctpmap:(\\d+) (\\S*)(?: (\\d*))?"),
-			Names:      []string{"sctpmapNumber", "app", "maxMessageSize"},
-			Types:      []rune{'d', 's', 'd'},
-			Format:     "",
-			FormatFunc: nil,
+			Name:   "sctpmap",
+			Push:   "",
+			Reg:    regexp.MustCompile("^sctpmap:(\\d+) (\\S*)(?: (\\d*))?"),
+			Names:  []string{"sctpmapNumber", "app", "maxMessageSize"},
+			Types:  []rune{'d', 's', 'd'},
+			Format: "",
+			FormatFunc: func(obj *json.Json) string {
+				if hasValue(obj, "maxMessageSize") {
+					return "sctpmap:%s %s %s"
+				} else {
+					return "sctpmap:%s %s"
+				}
+			},
 		},
 		// a=x-google-flag:conference
 		&Rule{
@@ -451,13 +534,19 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 		},
 		// a=rid:1 send max-width=1280;max-height=720;max-fps=30;depend=0
 		&Rule{
-			Name:       "",
-			Push:       "rids",
-			Reg:        regexp.MustCompile("^rid:([\\d\\w]+) (\\w+)(?: ([\\S| ]*))?"),
-			Names:      []string{"id", "direction", "params"},
-			Types:      []rune{'s', 's', 's'},
-			Format:     "",
-			FormatFunc: nil,
+			Name:   "",
+			Push:   "rids",
+			Reg:    regexp.MustCompile("^rid:([\\d\\w]+) (\\w+)(?: ([\\S| ]*))?"),
+			Names:  []string{"id", "direction", "params"},
+			Types:  []rune{'s', 's', 's'},
+			Format: "",
+			FormatFunc: func(obj *json.Json) string {
+				if hasValue(obj, "params") {
+					return "rid:%s %s %s"
+				} else {
+					return "rid:%s %s"
+				}
+			},
 		},
 		// a=imageattr:97 send [x=800,y=640,sar=1.1,q=0.6] [x=480,y=320] recv [x=330,y=250]
 		// a=imageattr:* send [x=800,y=640] recv *
@@ -476,9 +565,15 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 				"dir2",
 				"attrs2",
 			},
-			Types:      []rune{'s', 's', 's', 's', 's'},
-			Format:     "",
-			FormatFunc: nil,
+			Types:  []rune{'s', 's', 's', 's', 's'},
+			Format: "",
+			FormatFunc: func(obj *json.Json) string {
+				ret := "imageattr:%s %s %s"
+				if hasValue(obj, "dir2") {
+					ret = ret + " %s %s"
+				}
+				return ret
+			},
 		},
 		// a=simulcast:send 1,2,3;~4,~5 recv 6;~7,~8
 		// a=simulcast:recv 1;4,5 send 6;7
@@ -490,10 +585,16 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 					"(send|recv) ([a-zA-Z0-9\\-_~;,]+)" +
 					"(?:\\s?(send|recv) ([a-zA-Z0-9\\-_~;,]+))?" +
 					"$"),
-			Names:      []string{"dir1", "list1", "dir2", "list2"},
-			Types:      []rune{'s', 's', 's', 's'},
-			Format:     "",
-			FormatFunc: nil,
+			Names:  []string{"dir1", "list1", "dir2", "list2"},
+			Types:  []rune{'s', 's', 's', 's'},
+			Format: "",
+			FormatFunc: func(obj *json.Json) string {
+				ret := "simulcast:%s %s"
+				if hasValue(obj, "dir2") {
+					ret = ret + " %s %s"
+				}
+				return ret
+			},
 		},
 		// Old simulcast draft 03 (implemented by Firefox).
 		// https://tools.ietf.org/html/draft-ietf-mmusic-sdp-simulcast-03
