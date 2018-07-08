@@ -13,7 +13,7 @@ type Rule struct {
 	Names      []string
 	Types      []rune
 	Format     string
-	FormatFunc interface{}
+	FormatFunc func(obj *json.Json) string
 }
 
 func hasValue(obj *json.Json, key string) bool {
