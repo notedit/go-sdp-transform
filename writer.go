@@ -2,6 +2,8 @@ package sdptransform
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/Jeffail/gabs"
@@ -9,6 +11,8 @@ import (
 
 var outerOrder = []byte{'v', 'o', 's', 'i', 'u', 'e', 'p', 'c', 'b', 't', 'r', 'z', 'a'}
 var innerOrder = []byte{'i', 'c', 'b', 'a'}
+
+var formatRegex = regexp.MustCompile("%[sdv%]")
 
 func Write(session *gabs.Container) string {
 
@@ -91,6 +95,7 @@ func Write(session *gabs.Container) string {
 func makeLine(otype byte, rule *Rule, location *gabs.Container) string {
 
 	var format string
+
 	if len(rule.Format) == 0 {
 		if rule.FormatFunc != nil {
 			var container *gabs.Container
@@ -124,8 +129,33 @@ func makeLine(otype byte, rule *Rule, location *gabs.Container) string {
 		args = append(args, location.Path(rule.Name).Data())
 	}
 
-	fmt.Println(format, args)
-	str := fmt.Sprintf(format, args)
+	line := []byte{otype, '='}
+	size := len(args)
+	i := 0
 
-	return str
+	formatStr := formatRegex.ReplaceAllStringFunc(format, func(x string) string {
+
+		if i >= size {
+			return x
+		}
+		arg := args[i]
+		i += 1
+
+		if x == "%%" {
+			return "%"
+		} else if x == "%s" {
+			argStr, _ := arg.(string)
+			return argStr
+		} else if x == "%d" {
+			argInt, _ := arg.(int)
+			argStr := strconv.Itoa(argInt)
+			return argStr
+		} else if x == "%v" {
+			return ""
+		}
+
+		return ""
+	})
+
+	return string(line) + formatStr
 }
