@@ -3,7 +3,7 @@ package sdptransform
 import (
 	"regexp"
 
-	json "github.com/bitly/go-simplejson"
+	"github.com/Jeffail/gabs"
 )
 
 type Rule struct {
@@ -13,27 +13,28 @@ type Rule struct {
 	Names      []string
 	Types      []rune
 	Format     string
-	FormatFunc func(obj *json.Json) string
+	FormatFunc func(obj *gabs.Container) string
 }
 
-func hasValue(obj *json.Json, key string) bool {
-	if _, ok := obj.CheckGet(key); !ok {
+func hasValue(obj *gabs.Container, key string) bool {
+
+	if !obj.Exists(key) {
 		return false
 	}
-	value := obj.Get(key)
-	if str, err := value.String(); err != nil {
+	value := obj.Path(key)
+	if str, ok := value.Data().(string); ok {
 		if len(str) == 0 {
 			return false
 		}
 		return true
-	} else if _, err := value.Int(); err != nil {
+	} else if _, err := value.Data().(int); err != nil {
 		return true
 	} else {
 		return false
 	}
 }
 
-var RulesMap map[byte][]*Rule = map[byte][]*Rule{
+var rulesMap map[byte][]*Rule = map[byte][]*Rule{
 	'v': []*Rule{
 		&Rule{
 			Name:   "version",
@@ -172,7 +173,7 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Names:  []string{"playload", "codec", "rate", "encoding"},
 			Types:  []rune{'d', 's', 'd', 's'},
 			Format: "",
-			FormatFunc: func(obj *json.Json) string {
+			FormatFunc: func(obj *gabs.Container) string {
 				var ret string
 				if hasValue(obj, "encoding") {
 					ret = "rtpmap:%d %s/%s/%s"
@@ -213,7 +214,7 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Names:  []string{"port", "netType", "ipVer", "address"},
 			Types:  []rune{'d', 's', 'd', 's'},
 			Format: "",
-			FormatFunc: func(obj *json.Json) string {
+			FormatFunc: func(obj *gabs.Container) string {
 				if hasValue(obj, "address") {
 					return "rtcp:%d %s IP%d %s"
 				} else {
@@ -238,7 +239,7 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Names:  []string{"payload", "type", "subtype"},
 			Types:  []rune{'s', 's', 's'},
 			Format: "",
-			FormatFunc: func(obj *json.Json) string {
+			FormatFunc: func(obj *gabs.Container) string {
 				if hasValue(obj, "subtype") {
 					return "rtcp-fb:%s %s %s"
 				} else {
@@ -255,7 +256,7 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Names:  []string{"value", "direction", "uri", "config"},
 			Types:  []rune{'d', 's', 's', 's'},
 			Format: "",
-			FormatFunc: func(obj *json.Json) string {
+			FormatFunc: func(obj *gabs.Container) string {
 				ret := "extmap:%d"
 				if hasValue(obj, "direction") {
 					ret = ret + "/%s"
@@ -277,7 +278,7 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Names:  []string{"id", "suite", "config", "sessionConfig"},
 			Types:  []rune{'d', 's', 's', 's'},
 			Format: "",
-			FormatFunc: func(obj *json.Json) string {
+			FormatFunc: func(obj *gabs.Container) string {
 				if hasValue(obj, "sessionConfig") {
 					return "crypto:%d %s %s %s"
 				} else {
@@ -387,7 +388,7 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Names:  []string{"foundation", "component", "transport", "priority", "ip", "port", "type", "raddr", "rport", "tcptype", "generation", "network-id", "network-cost"},
 			Types:  []rune{'s', 'd', 's', 'd', 's', 'd', 's', 's', 'd', 's', 'd', 'd', 'd', 'd'},
 			Format: "",
-			FormatFunc: func(obj *json.Json) string {
+			FormatFunc: func(obj *gabs.Container) string {
 				ret := "candidate:%s %d %s %d %s %d typ %s"
 				if hasValue(obj, "raddr") {
 					ret = ret + " raddr %s rport %d"
@@ -450,7 +451,7 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Names:  []string{"id", "attribute", "value"},
 			Types:  []rune{'d', 's', 's'},
 			Format: "",
-			FormatFunc: func(obj *json.Json) string {
+			FormatFunc: func(obj *gabs.Container) string {
 				ret := "ssrc:%d"
 				if hasValue(obj, "attribute") {
 					ret = ret + " %s"
@@ -515,7 +516,7 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Names:  []string{"sctpmapNumber", "app", "maxMessageSize"},
 			Types:  []rune{'d', 's', 'd'},
 			Format: "",
-			FormatFunc: func(obj *json.Json) string {
+			FormatFunc: func(obj *gabs.Container) string {
 				if hasValue(obj, "maxMessageSize") {
 					return "sctpmap:%s %s %s"
 				} else {
@@ -540,7 +541,7 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Names:  []string{"id", "direction", "params"},
 			Types:  []rune{'s', 's', 's'},
 			Format: "",
-			FormatFunc: func(obj *json.Json) string {
+			FormatFunc: func(obj *gabs.Container) string {
 				if hasValue(obj, "params") {
 					return "rid:%s %s %s"
 				} else {
@@ -567,7 +568,7 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 			},
 			Types:  []rune{'s', 's', 's', 's', 's'},
 			Format: "",
-			FormatFunc: func(obj *json.Json) string {
+			FormatFunc: func(obj *gabs.Container) string {
 				ret := "imageattr:%s %s %s"
 				if hasValue(obj, "dir2") {
 					ret = ret + " %s %s"
@@ -588,7 +589,7 @@ var RulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Names:  []string{"dir1", "list1", "dir2", "list2"},
 			Types:  []rune{'s', 's', 's', 's'},
 			Format: "",
-			FormatFunc: func(obj *json.Json) string {
+			FormatFunc: func(obj *gabs.Container) string {
 				ret := "simulcast:%s %s"
 				if hasValue(obj, "dir2") {
 					ret = ret + " %s %s"
