@@ -60,6 +60,8 @@ func Write(session *gabs.Container) string {
 		mLine, _ := session.ArrayElement(i, "media")
 		lineStr := makeLine('m', rulesMap['m'][0], mLine)
 
+		sdp = append(sdp, lineStr)
+
 		for _, inType := range innerOrder {
 			for _, rule := range rulesMap[inType] {
 				if len(rule.Name) > 0 && session.Exists(rule.Name) && session.Path(rule.Name) != nil {
