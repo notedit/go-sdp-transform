@@ -6,4 +6,5 @@ import (
 
 func TestWrite(t *testing.T) {
 
+	t.Log("pass")
 }

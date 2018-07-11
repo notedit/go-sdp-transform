@@ -1,7 +1,6 @@
 package sdptransform
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"regexp"
@@ -17,26 +16,30 @@ var validLineRegex = regexp.MustCompile("^([a-z])=(.*)")
 
 func Parse(sdp []byte) (session *gabs.Container, err error) {
 
-	bufferReader := bufio.NewReader(bytes.NewReader(sdp))
+	buffer := bytes.NewBuffer(sdp)
+
 	session = gabs.New()
 	location := session
 
 	session.Array("media")
 
 	for {
-		if line, err := bufferReader.ReadSlice('\n'); err != nil {
+		if line, err := buffer.ReadBytes('\n'); err == nil {
 
+			fmt.Println(string(line))
 			if len(line) > 0 && line[len(line)-1] == '\r' {
 				line = line[:len(line)-1]
 			}
+
 			if !validLineRegex.Match(line) {
+				fmt.Printf("does not match")
 				continue
 			}
 
 			lineType := line[0]
 			content := line[2:]
 
-			fmt.Println("line type ", lineType, "content ", content)
+			fmt.Println("line type ", string([]byte{lineType}), "content ", string(content))
 
 			if lineType == byte('m') {
 				m := gabs.New()
@@ -60,9 +63,12 @@ func Parse(sdp []byte) (session *gabs.Container, err error) {
 			for _, rule := range rules {
 				if rule.Reg.Match(content) {
 					parseReg(rule, location, content)
+					break
 				}
 			}
-
+		} else {
+			fmt.Println("error ", err)
+			break
 		}
 	}
 	fmt.Println("parsed session", session.String())
@@ -71,11 +77,11 @@ func Parse(sdp []byte) (session *gabs.Container, err error) {
 
 func ParseParams(str []byte) map[string]string {
 
-	bufferReader := bufio.NewReader(bytes.NewReader(str))
+	buffer := bytes.NewBuffer(str)
 	ret := map[string]string{}
 
 	for {
-		if param, err := bufferReader.ReadSlice(';'); err != nil {
+		if param, err := buffer.ReadBytes(';'); err != nil {
 			param = bytes.TrimSpace(param)
 			if len(param) == 0 {
 				continue
@@ -113,11 +119,11 @@ func ParsePayloads(str []byte) []int {
 
 func ParseImageAttributes(str []byte) []map[string]int {
 
-	bufferReader := bufio.NewReader(bytes.NewReader(str))
+	buffer := bytes.NewBuffer(str)
 	ret := []map[string]int{}
 
 	for {
-		if param, err := bufferReader.ReadSlice(' '); err != nil {
+		if param, err := buffer.ReadBytes(' '); err != nil {
 			param = bytes.TrimSpace(param)
 			if len(param) == 0 {
 				continue
@@ -198,11 +204,11 @@ func parseReg(rule *Rule, location *gabs.Container, content []byte) {
 		}
 	} else if needsBlank {
 		if !location.Exists(rule.Name) {
-			location.Set(nil, rule.Name)
+			location.Set(map[string]interface{}{}, rule.Name)
 		}
 	}
 
-	match := rule.Reg.FindAll(content, -1)
+	match := rule.Reg.FindAllSubmatch(content, -1)
 
 	object := gabs.New()
 	var keyLocation *gabs.Container
@@ -217,7 +223,9 @@ func parseReg(rule *Rule, location *gabs.Container, content []byte) {
 		}
 	}
 
-	attachProperties(match, keyLocation, rule.Names, rule.Name, rule.Types)
+	fmt.Println(match)
+
+	attachProperties(match[0], keyLocation, rule.Names, rule.Name, rule.Types)
 
 	if len(rule.Push) != 0 {
 		location.ArrayAppend(keyLocation.Data(), rule.Push)
@@ -232,7 +240,9 @@ func attachProperties(match [][]byte, location *gabs.Container, names []string, 
 	} else {
 		for i := 0; i < len(names); i++ {
 			if len(match) > i+1 && match[i+1] != nil {
+				fmt.Println(string(match[i+1]), names[i])
 				location.Set(toType(string(match[i+1]), types[i]), names[i])
+				fmt.Println(location.Data())
 			}
 		}
 	}
