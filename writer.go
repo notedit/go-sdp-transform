@@ -142,7 +142,7 @@ func makeLine(otype byte, rule *Rule, location *gabs.Container) string {
 		if x == "%%" {
 			return "%"
 		} else if x == "%s" {
-			argStr, ok := arg.(string)
+			argStr, _ := arg.(string)
 			return argStr
 		} else if x == "%d" {
 			argInt, _ := arg.(int)
