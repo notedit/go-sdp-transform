@@ -1,10 +1,19 @@
 package sdptransform
 
 import (
+	"fmt"
 	"testing"
 )
 
 func TestWrite(t *testing.T) {
 
-	t.Log("pass")
+	session, err := Parse([]byte(sdpStr))
+	if err != nil {
+		t.Error(err)
+	}
+
+	ret := Write(session)
+
+	fmt.Println(ret)
+
 }

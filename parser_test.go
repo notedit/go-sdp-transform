@@ -48,5 +48,5 @@ func TestSimulcast(t *testing.T) {
 		t.Error("Simulcast parse error")
 	}
 
-	t.Log(ret)
+	fmt.Println(ret)
 }
