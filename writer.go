@@ -52,10 +52,7 @@ func Write(session *gabs.Container) string {
 				}
 
 				for i := 0; i < count; i++ {
-					el, err := session.ArrayElement(i, rule.Push)
-					if err != nil {
-						fmt.Println("error2 ", err)
-					}
+					el, _ := session.ArrayElement(i, rule.Push)
 					lineStr := makeLine(outType, rule, el)
 					sdp = append(sdp, lineStr)
 				}
@@ -75,9 +72,6 @@ func Write(session *gabs.Container) string {
 					lineStr := makeLine(inType, rule, mLine)
 					sdp = append(sdp, lineStr)
 				} else if len(rule.Push) > 0 && mLine.Exists(rule.Push) {
-					if rule.Push == "rtp" {
-
-					}
 					count, err := mLine.ArrayCount(rule.Push)
 					if err != nil {
 						continue
@@ -136,15 +130,7 @@ func makeLine(otype byte, rule *Rule, location *gabs.Container) string {
 	size := len(args)
 	i := 0
 
-	if rule.Push == "rtp" {
-		fmt.Println("rtp", format, location, args)
-	}
-
 	formatStr := formatRegex.ReplaceAllStringFunc(format, func(x string) string {
-
-		if rule.Push == "rtp" {
-			fmt.Println("rtp=====", x)
-		}
 
 		if i >= size {
 			return x
@@ -157,9 +143,6 @@ func makeLine(otype byte, rule *Rule, location *gabs.Container) string {
 			return "%"
 		} else if x == "%s" {
 			argStr, ok := arg.(string)
-			if !ok {
-				fmt.Println("error======", arg)
-			}
 			return argStr
 		} else if x == "%d" {
 			argInt, _ := arg.(int)

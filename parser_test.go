@@ -1,5 +1,10 @@
 package sdptransform
 
+import (
+	"fmt"
+	"testing"
+)
+
 var sdpStr = `v=0
 o=- 20518 0 IN IP4 203.0.113.1
 s= 
@@ -24,24 +29,24 @@ a=candidate:0 1 UDP 2113667327 203.0.113.1 55400 typ host
 a=candidate:1 2 UDP 2113667326 203.0.113.1 55401 typ host
 `
 
-// var simulcastStr = `a=simulcast:send 1,~4;2;3 recv c`
+var simulcastStr = `a=simulcast:send 1,~4;2;3 recv c`
 
-// func TestParse(t *testing.T) {
+func TestParse(t *testing.T) {
 
-// 	session, err := Parse([]byte(sdpStr))
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	fmt.Println(session.Data())
-// }
+	session, err := Parse([]byte(sdpStr))
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(session.Data())
+}
 
-// func TestSimulcast(t *testing.T) {
+func TestSimulcast(t *testing.T) {
 
-// 	ret := ParseSimulcastStreamList([]byte(simulcastStr))
+	ret := ParseSimulcastStreamList([]byte(simulcastStr))
 
-// 	if len(ret) != 3 {
-// 		t.Error("Simulcast parse error")
-// 	}
+	if len(ret) != 3 {
+		t.Error("Simulcast parse error")
+	}
 
-// 	fmt.Println(ret)
-// }
+	fmt.Println(ret)
+}
