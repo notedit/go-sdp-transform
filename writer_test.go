@@ -12,6 +12,8 @@ func TestWrite(t *testing.T) {
 		t.Error(err)
 	}
 
+	fmt.Println(session)
+
 	ret := Write(session)
 
 	fmt.Println(ret)

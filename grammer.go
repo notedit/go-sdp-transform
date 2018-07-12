@@ -176,10 +176,10 @@ var rulesMap map[byte][]*Rule = map[byte][]*Rule{
 			FormatFunc: func(obj *gabs.Container) string {
 				var ret string
 				if hasValue(obj, "encoding") {
-					ret = "rtpmap:%d %s/%s/%s"
+					ret = "rtpmap:%d %s/%d/%s"
 				} else {
 					if hasValue(obj, "rate") {
-						ret = "rtpmap:%d %s/%s"
+						ret = "rtpmap:%d %s/%d"
 					} else {
 						ret = "rtpmap:%d %s"
 					}

@@ -47,11 +47,15 @@ func Write(session *gabs.Container) string {
 			} else if len(rule.Push) > 0 && session.Exists(rule.Push) {
 				count, err := session.ArrayCount(rule.Push)
 				if err != nil {
+					fmt.Println("error ", err)
 					continue
 				}
 
 				for i := 0; i < count; i++ {
-					el, _ := session.ArrayElement(i, rule.Push)
+					el, err := session.ArrayElement(i, rule.Push)
+					if err != nil {
+						fmt.Println("error2 ", err)
+					}
 					lineStr := makeLine(outType, rule, el)
 					sdp = append(sdp, lineStr)
 				}
@@ -63,15 +67,17 @@ func Write(session *gabs.Container) string {
 	for i := 0; i < mLines; i++ {
 		mLine, _ := session.ArrayElement(i, "media")
 		lineStr := makeLine('m', rulesMap['m'][0], mLine)
-
 		sdp = append(sdp, lineStr)
 
 		for _, inType := range innerOrder {
 			for _, rule := range rulesMap[inType] {
-				if len(rule.Name) > 0 && session.Exists(rule.Name) && session.Path(rule.Name) != nil {
+				if len(rule.Name) > 0 && mLine.Exists(rule.Name) && mLine.Path(rule.Name) != nil {
 					lineStr := makeLine(inType, rule, mLine)
 					sdp = append(sdp, lineStr)
 				} else if len(rule.Push) > 0 && mLine.Exists(rule.Push) {
+					if rule.Push == "rtp" {
+
+					}
 					count, err := mLine.ArrayCount(rule.Push)
 					if err != nil {
 						continue
@@ -113,13 +119,10 @@ func makeLine(otype byte, rule *Rule, location *gabs.Container) string {
 	args := []interface{}{}
 
 	if len(rule.Names) > 0 {
-
 		for _, name := range rule.Names {
 			if len(rule.Name) > 0 && location.Exists(rule.Name) && location.Exists(rule.Name, name) {
-				fmt.Println("append", location.Search(rule.Name, name).Data())
 				args = append(args, location.Search(rule.Name, name).Data())
 			} else if location.Exists(name) {
-				fmt.Println("append", location.Path(name).Data())
 				args = append(args, location.Path(name).Data())
 			} else {
 				args = append(args, "")
@@ -133,18 +136,30 @@ func makeLine(otype byte, rule *Rule, location *gabs.Container) string {
 	size := len(args)
 	i := 0
 
+	if rule.Push == "rtp" {
+		fmt.Println("rtp", format, location, args)
+	}
+
 	formatStr := formatRegex.ReplaceAllStringFunc(format, func(x string) string {
+
+		if rule.Push == "rtp" {
+			fmt.Println("rtp=====", x)
+		}
 
 		if i >= size {
 			return x
 		}
+
 		arg := args[i]
 		i += 1
 
 		if x == "%%" {
 			return "%"
 		} else if x == "%s" {
-			argStr, _ := arg.(string)
+			argStr, ok := arg.(string)
+			if !ok {
+				fmt.Println("error======", arg)
+			}
 			return argStr
 		} else if x == "%d" {
 			argInt, _ := arg.(int)
