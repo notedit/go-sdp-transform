@@ -16,83 +16,75 @@ var validLineRegex = regexp.MustCompile("^([a-z])=(.*)")
 
 func Parse(sdp []byte) (session *gabs.Container, err error) {
 
-	buffer := bytes.NewBuffer(sdp)
-
 	session = gabs.New()
 	location := session
-
 	session.Array("media")
 
-	for {
-		if line, err := buffer.ReadBytes('\n'); err == nil {
+	lines := bytes.Split(sdp, []byte{'\n'})
 
-			fmt.Println(string(line))
-			if len(line) > 0 && line[len(line)-1] == '\r' {
-				line = line[:len(line)-1]
+	for _, line := range lines {
+
+		if len(line) > 0 && line[len(line)-1] == '\r' {
+			line = line[:len(line)-1]
+		}
+
+		if !validLineRegex.Match(line) {
+			continue
+		}
+
+		lineType := line[0]
+		content := line[2:]
+
+		if lineType == 'm' {
+			m := gabs.New()
+			m.Array("rtp")
+			m.Array("fmtp")
+
+			session.ArrayAppend(m.Data(), "media")
+			index, _ := session.ArrayCount("media")
+			location, err = session.ArrayElement(index-1, "media")
+
+			if err != nil {
+				fmt.Println("error ===========", err)
 			}
+		}
 
-			if !validLineRegex.Match(line) {
-				fmt.Printf("does not match")
-				continue
+		if _, ok := rulesMap[lineType]; !ok {
+			fmt.Println("sdp can not find type ", lineType)
+			continue
+		}
+
+		rules := rulesMap[lineType]
+
+		for _, rule := range rules {
+			if rule.Reg.Match(content) {
+				parseReg(rule, location, content)
+				break
 			}
-
-			lineType := line[0]
-			content := line[2:]
-
-			fmt.Println("line type ", string([]byte{lineType}), "content ", string(content))
-
-			if lineType == byte('m') {
-				m := gabs.New()
-				m.Array("rtp")
-				m.Array("fmtp")
-
-				session.ArrayAppend(m.Data(), "media")
-				index, _ := session.ArrayCount("media")
-				location, _ = session.ArrayElement(index, "media")
-
-				fmt.Println("add media ", session.String())
-			}
-
-			if _, ok := rulesMap[lineType]; !ok {
-				fmt.Println("sdp can not find type ", lineType)
-				continue
-			}
-
-			rules := rulesMap[lineType]
-
-			for _, rule := range rules {
-				if rule.Reg.Match(content) {
-					parseReg(rule, location, content)
-					break
-				}
-			}
-		} else {
-			fmt.Println("error ", err)
-			break
 		}
 	}
-	fmt.Println("parsed session", session.String())
+
+	fmt.Println(session)
+
 	return
 }
 
 func ParseParams(str []byte) map[string]string {
 
-	buffer := bytes.NewBuffer(str)
 	ret := map[string]string{}
+	params := bytes.Split(str, []byte{';'})
 
-	for {
-		if param, err := buffer.ReadBytes(';'); err != nil {
-			param = bytes.TrimSpace(param)
-			if len(param) == 0 {
-				continue
-			}
-			keyValue := bytes.SplitN(param, []byte{'='}, 2)
+	for _, param := range params {
+		param = bytes.TrimSpace(param)
+		if len(param) == 0 {
+			continue
+		}
+		keyValue := bytes.SplitN(param, []byte{'='}, 2)
 
-			if len(keyValue) == 2 {
-				ret[string(keyValue[0])] = string(keyValue[1])
-			} else if len(keyValue) == 1 {
-				ret[string(keyValue[0])] = ""
-			}
+		if len(keyValue) == 2 {
+			ret[string(keyValue[0])] = string(keyValue[1])
+		} else if len(keyValue) == 1 {
+			ret[string(keyValue[0])] = ""
 		}
 	}
 
@@ -119,42 +111,39 @@ func ParsePayloads(str []byte) []int {
 
 func ParseImageAttributes(str []byte) []map[string]int {
 
-	buffer := bytes.NewBuffer(str)
 	ret := []map[string]int{}
+	params := bytes.Split(str, []byte{' '})
 
-	for {
-		if param, err := buffer.ReadBytes(' '); err != nil {
-			param = bytes.TrimSpace(param)
-			if len(param) == 0 {
-				continue
-			}
-			if len(param) < 5 {
-				continue
-			}
-
-			keyValues := bytes.Split(param[1:len(param)-2], []byte{','})
-
-			retMap := map[string]int{}
-
-			for _, keyValue := range keyValues {
-				_keyValue := bytes.SplitN(keyValue, []byte{'='}, 2)
-				if len(_keyValue) != 2 {
-					continue
-				}
-
-				value, err := strconv.Atoi(string(_keyValue[1]))
-				if err != nil {
-					continue
-				}
-
-				retMap[string(_keyValue[0])] = value
-
-			}
-
-			ret = append(ret, retMap)
+	for _, param := range params {
+		param = bytes.TrimSpace(param)
+		if len(param) == 0 {
+			continue
 		}
-	}
+		if len(param) < 5 {
+			continue
+		}
 
+		keyValues := bytes.Split(param[1:len(param)-2], []byte{','})
+
+		retMap := map[string]int{}
+
+		for _, keyValue := range keyValues {
+			_keyValue := bytes.SplitN(keyValue, []byte{'='}, 2)
+			if len(_keyValue) != 2 {
+				continue
+			}
+
+			value, err := strconv.Atoi(string(_keyValue[1]))
+			if err != nil {
+				continue
+			}
+
+			retMap[string(_keyValue[0])] = value
+
+		}
+
+		ret = append(ret, retMap)
+	}
 	return ret
 
 }
@@ -223,13 +212,10 @@ func parseReg(rule *Rule, location *gabs.Container, content []byte) {
 		}
 	}
 
-	fmt.Println(match)
-
 	attachProperties(match[0], keyLocation, rule.Names, rule.Name, rule.Types)
 
 	if len(rule.Push) != 0 {
 		location.ArrayAppend(keyLocation.Data(), rule.Push)
-		fmt.Println("array append ", location.String())
 	}
 }
 
@@ -242,10 +228,11 @@ func attachProperties(match [][]byte, location *gabs.Container, names []string, 
 			if len(match) > i+1 && match[i+1] != nil {
 				fmt.Println(string(match[i+1]), names[i])
 				location.Set(toType(string(match[i+1]), types[i]), names[i])
-				fmt.Println(location.Data())
 			}
 		}
 	}
+
+	fmt.Println("attachProperties", location.Data())
 }
 
 func toType(str string, otype rune) interface{} {
