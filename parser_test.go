@@ -1,6 +1,7 @@
 package sdptransform
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -36,8 +37,7 @@ func TestParse(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
-	t.Log(session)
+	fmt.Println(session.Data())
 }
 
 func TestSimulcast(t *testing.T) {

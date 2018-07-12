@@ -45,7 +45,7 @@ func Parse(sdp []byte) (session *gabs.Container, err error) {
 			location, err = session.ArrayElement(index-1, "media")
 
 			if err != nil {
-				fmt.Println("error ===========", err)
+				fmt.Println("can not get media element")
 			}
 		}
 
@@ -63,8 +63,6 @@ func Parse(sdp []byte) (session *gabs.Container, err error) {
 			}
 		}
 	}
-
-	fmt.Println(session)
 
 	return
 }
@@ -137,9 +135,7 @@ func ParseImageAttributes(str []byte) []map[string]int {
 			if err != nil {
 				continue
 			}
-
 			retMap[string(_keyValue[0])] = value
-
 		}
 
 		ret = append(ret, retMap)
@@ -226,13 +222,10 @@ func attachProperties(match [][]byte, location *gabs.Container, names []string, 
 	} else {
 		for i := 0; i < len(names); i++ {
 			if len(match) > i+1 && match[i+1] != nil {
-				fmt.Println(string(match[i+1]), names[i])
 				location.Set(toType(string(match[i+1]), types[i]), names[i])
 			}
 		}
 	}
-
-	fmt.Println("attachProperties", location.Data())
 }
 
 func toType(str string, otype rune) interface{} {
