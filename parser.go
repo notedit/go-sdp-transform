@@ -14,13 +14,13 @@ const maxLineSize = 1024
 var keyvalueRegex = regexp.MustCompile("^\\s*([^= ]+)(?:\\s*=\\s*([^ ]+))?$")
 var validLineRegex = regexp.MustCompile("^([a-z])=(.*)")
 
-func Parse(sdp []byte) (session *gabs.Container, err error) {
+func Parse(sdp string) (session *gabs.Container, err error) {
 
 	session = gabs.New()
 	location := session
 	session.Array("media")
 
-	lines := bytes.Split(sdp, []byte{'\n'})
+	lines := bytes.Split([]byte(sdp), []byte{'\n'})
 
 	for _, line := range lines {
 
@@ -67,10 +67,10 @@ func Parse(sdp []byte) (session *gabs.Container, err error) {
 	return
 }
 
-func ParseParams(str []byte) map[string]string {
+func ParseParams(str string) map[string]string {
 
 	ret := map[string]string{}
-	params := bytes.Split(str, []byte{';'})
+	params := bytes.Split([]byte(str), []byte{';'})
 
 	for _, param := range params {
 		param = bytes.TrimSpace(param)
@@ -90,9 +90,9 @@ func ParseParams(str []byte) map[string]string {
 
 }
 
-func ParsePayloads(str []byte) []int {
+func ParsePayloads(str string) []int {
 
-	keyValue := bytes.Split(str, []byte{' '})
+	keyValue := bytes.Split([]byte(str), []byte{' '})
 	payloads := []int{}
 
 	for _, value := range keyValue {
@@ -107,10 +107,10 @@ func ParsePayloads(str []byte) []int {
 	return payloads
 }
 
-func ParseImageAttributes(str []byte) []map[string]int {
+func ParseImageAttributes(str string) []map[string]int {
 
 	ret := []map[string]int{}
-	params := bytes.Split(str, []byte{' '})
+	params := bytes.Split([]byte(str), []byte{' '})
 
 	for _, param := range params {
 		param = bytes.TrimSpace(param)
@@ -144,11 +144,11 @@ func ParseImageAttributes(str []byte) []map[string]int {
 
 }
 
-func ParseSimulcastStreamList(str []byte) [][]map[string]interface{} {
+func ParseSimulcastStreamList(str string) [][]map[string]interface{} {
 
 	ret := [][]map[string]interface{}{}
 
-	streams := bytes.Split(str, []byte{';'})
+	streams := bytes.Split([]byte(str), []byte{';'})
 
 	for _, stream := range streams {
 

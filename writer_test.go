@@ -7,7 +7,7 @@ import (
 
 func TestWrite(t *testing.T) {
 
-	session, err := Parse([]byte(sdpStr))
+	session, err := Parse(sdpStr)
 	if err != nil {
 		t.Error(err)
 	}

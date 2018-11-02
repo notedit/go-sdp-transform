@@ -169,14 +169,14 @@ var rulesMap map[byte][]*Rule = map[byte][]*Rule{
 		&Rule{
 			Name:   "",
 			Push:   "rtp",
-			Reg:    regexp.MustCompile("^rtpmap:(\\d*) ([\\w\\-\\.]*)(?:\\s*\\/(\\d*)(?:\\s*\\/(\\S*))?)?"),
+			Reg:    regexp.MustCompile("^rtpmap:(\\d*) ([\\w\\-\\.]*)(?:\\s*\\/(\\d*)(?:\\s*\\/(\\d*))?)?"),
 			Names:  []string{"playload", "codec", "rate", "encoding"},
-			Types:  []rune{'d', 's', 'd', 's'},
+			Types:  []rune{'d', 's', 'd', 'd'},
 			Format: "",
 			FormatFunc: func(obj *gabs.Container) string {
 				var ret string
 				if hasValue(obj, "encoding") {
-					ret = "rtpmap:%d %s/%d/%s"
+					ret = "rtpmap:%d %s/%d/%d"
 				} else {
 					if hasValue(obj, "rate") {
 						ret = "rtpmap:%d %s/%d"
@@ -237,13 +237,13 @@ var rulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Push:   "rtcpFb",
 			Reg:    regexp.MustCompile("^rtcp-fb:(\\*|\\d*) ([\\w\\-_]*)(?: ([\\w\\-_]*))?"),
 			Names:  []string{"payload", "type", "subtype"},
-			Types:  []rune{'s', 's', 's'},
+			Types:  []rune{'d', 's', 's'},
 			Format: "",
 			FormatFunc: func(obj *gabs.Container) string {
 				if hasValue(obj, "subtype") {
-					return "rtcp-fb:%s %s %s"
+					return "rtcp-fb:%d %s %s"
 				} else {
-					return "rtcp-fb:%s %s"
+					return "rtcp-fb:%d %s"
 				}
 			},
 		},
