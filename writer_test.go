@@ -14,7 +14,11 @@ func TestWrite(t *testing.T) {
 
 	fmt.Println(session)
 
-	ret := Write(session)
+	ret, err := Write(session)
+
+	if err != nil {
+		t.Error(err)
+	}
 
 	fmt.Println(ret)
 

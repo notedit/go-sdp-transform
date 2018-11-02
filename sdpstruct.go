@@ -2,7 +2,7 @@ package sdptransform
 
 type OriginStruct struct {
 	Username       string
-	SessionId      int
+	SessionId      string
 	SessionVersion int
 	NetType        string
 	Address        string

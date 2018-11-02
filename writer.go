@@ -1,6 +1,7 @@
 package sdptransform
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -14,7 +15,17 @@ var innerOrder = []byte{'i', 'c', 'b', 'a'}
 
 var formatRegex = regexp.MustCompile("%[sdv%]")
 
-func Write(session *gabs.Container) string {
+// Write  wirte SdpStruct to string
+func Write(sdpStruct *SdpStruct) (string, error) {
+
+	sdpBuffer, err := json.Marshal(sdpStruct)
+	if err != nil {
+		return "", err
+	}
+	session, err := gabs.ParseJSON(sdpBuffer)
+	if err != nil {
+		return "", err
+	}
 
 	if !session.Exists("version") {
 		session.Set(0, "version")
@@ -89,7 +100,7 @@ func Write(session *gabs.Container) string {
 
 	sdpStr := strings.Join(sdp, "\r\n") + "\r\n"
 
-	return sdpStr
+	return sdpStr, nil
 }
 
 func makeLine(otype byte, rule *Rule, location *gabs.Container) string {

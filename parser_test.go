@@ -1,7 +1,6 @@
 package sdptransform
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 )
@@ -142,11 +141,10 @@ const sdp = "v=0\r\n" +
 
 func TestParse(t *testing.T) {
 
-	session, err := Parse(sdpStr)
+	_, err := Parse(sdpStr)
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println(session.Data())
 }
 
 func TestSimulcast(t *testing.T) {
@@ -162,13 +160,7 @@ func TestSimulcast(t *testing.T) {
 
 func TestStruct(t *testing.T) {
 
-	session, err := Parse(sdpStr)
-	if err != nil {
-		t.Error(err)
-	}
-
-	var sdpStruct SdpStruct
-	err = json.Unmarshal(session.Bytes(), &sdpStruct)
+	sdpStruct, err := Parse(sdpStr)
 	if err != nil {
 		t.Error(err)
 	}

@@ -49,10 +49,10 @@ var rulesMap map[byte][]*Rule = map[byte][]*Rule{
 		&Rule{
 			Name:   "origin",
 			Push:   "",
-			Reg:    regexp.MustCompile("^(\\S*) (\\d*) (\\d*) (\\S*) IP(\\d) (\\S*)"),
+			Reg:    regexp.MustCompile("^(\\S*) (\\S*) (\\d*) (\\S*) IP(\\d) (\\S*)"),
 			Names:  []string{"username", "sessionId", "sessionVersion", "netType", "ipVer", "address"},
-			Types:  []rune{'s', 'd', 'd', 's', 'd', 's'},
-			Format: "%s %d %d %s IP%d %s",
+			Types:  []rune{'s', 's', 'd', 's', 'd', 's'},
+			Format: "%s %s %d %s IP%d %s",
 		},
 	},
 	's': []*Rule{

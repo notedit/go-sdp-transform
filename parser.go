@@ -2,6 +2,7 @@ package sdptransform
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -14,9 +15,10 @@ const maxLineSize = 1024
 var keyvalueRegex = regexp.MustCompile("^\\s*([^= ]+)(?:\\s*=\\s*([^ ]+))?$")
 var validLineRegex = regexp.MustCompile("^([a-z])=(.*)")
 
-func Parse(sdp string) (session *gabs.Container, err error) {
+// Parse parse sdp string to SdpStruct
+func Parse(sdp string) (sdpStruct *SdpStruct, err error) {
 
-	session = gabs.New()
+	session := gabs.New()
 	location := session
 	session.Array("media")
 
@@ -63,7 +65,7 @@ func Parse(sdp string) (session *gabs.Container, err error) {
 			}
 		}
 	}
-
+	err = json.Unmarshal(session.Bytes(), &sdpStruct)
 	return
 }
 
