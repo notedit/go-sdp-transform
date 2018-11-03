@@ -165,6 +165,12 @@ func TestStruct(t *testing.T) {
 		t.Error(err)
 	}
 
+	rtp := sdpStruct.Media[0].Rtp[0]
+
+	if rtp.Codec != "PCMU" && rtp.Payload == 0 {
+		t.Error("can not parse payload")
+	}
+
 	t.Log("==========")
 	t.Log(sdpStruct)
 }

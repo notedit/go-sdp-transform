@@ -170,7 +170,7 @@ var rulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Name:   "",
 			Push:   "rtp",
 			Reg:    regexp.MustCompile("^rtpmap:(\\d*) ([\\w\\-\\.]*)(?:\\s*\\/(\\d*)(?:\\s*\\/(\\d*))?)?"),
-			Names:  []string{"playload", "codec", "rate", "encoding"},
+			Names:  []string{"payload", "codec", "rate", "encoding"},
 			Types:  []rune{'d', 's', 'd', 'd'},
 			Format: "",
 			FormatFunc: func(obj *gabs.Container) string {
