@@ -3,11 +3,13 @@ package sdptransform
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/Jeffail/gabs"
+	"github.com/sanity-io/litter"
 )
 
 var outerOrder = []byte{'v', 'o', 's', 'i', 'u', 'e', 'p', 'c', 'b', 't', 'r', 'z', 'a'}
@@ -39,6 +41,8 @@ func Write(sdpStruct *SdpStruct) (string, error) {
 		session.Set([]interface{}{}, "media")
 	}
 
+	litter.Dump(session.S("groups").Data())
+
 	sdp := []string{}
 
 	mLines, _ := session.ArrayCount("media")
@@ -51,14 +55,15 @@ func Write(sdpStruct *SdpStruct) (string, error) {
 	}
 
 	for _, outType := range outerOrder {
+
 		for _, rule := range rulesMap[outType] {
 			if len(rule.Name) != 0 && session.Exists(rule.Name) && session.Path(rule.Name) != nil {
 				lineStr := makeLine(outType, rule, session)
 				sdp = append(sdp, lineStr)
 			} else if len(rule.Push) > 0 && session.Exists(rule.Push) {
 				count, err := session.ArrayCount(rule.Push)
+				fmt.Println(rule.Push)
 				if err != nil {
-					fmt.Println("error ", err)
 					continue
 				}
 
@@ -67,7 +72,6 @@ func Write(sdpStruct *SdpStruct) (string, error) {
 					lineStr := makeLine(outType, rule, el)
 					sdp = append(sdp, lineStr)
 				}
-
 			}
 		}
 	}
@@ -156,8 +160,13 @@ func makeLine(otype byte, rule *Rule, location *gabs.Container) string {
 			argStr, _ := arg.(string)
 			return argStr
 		} else if x == "%d" {
-			argInt, _ := arg.(int)
-			argStr := strconv.Itoa(argInt)
+			argInt, ok := arg.(float64)
+			if !ok {
+				fmt.Println("interface cast to int error, realtype is ", reflect.TypeOf(arg).String(), reflect.ValueOf(arg))
+				fmt.Println(rule)
+				litter.Dump(args)
+			}
+			argStr := strconv.Itoa(int(argInt))
 			return argStr
 		} else if x == "%v" {
 			return ""

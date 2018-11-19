@@ -29,6 +29,8 @@ func hasValue(obj *gabs.Container, key string) bool {
 		return true
 	} else if _, ok := value.Data().(int); ok {
 		return true
+	} else if _, ok := value.Data().(float64); ok {
+		return true
 	} else {
 		return false
 	}
@@ -49,7 +51,7 @@ var rulesMap map[byte][]*Rule = map[byte][]*Rule{
 		&Rule{
 			Name:   "origin",
 			Push:   "",
-			Reg:    regexp.MustCompile("^(\\S*) (\\S*) (\\d*) (\\S*) IP(\\d) (\\S*)"),
+			Reg:    regexp.MustCompile("^(\\S*) (\\S*) (\\d*) (\\S*) IP(\\d*) (\\S*)"),
 			Names:  []string{"username", "sessionId", "sessionVersion", "netType", "ipVer", "address"},
 			Types:  []rune{'s', 's', 'd', 's', 'd', 's'},
 			Format: "%s %s %d %s IP%d %s",
@@ -175,6 +177,7 @@ var rulesMap map[byte][]*Rule = map[byte][]*Rule{
 			Format: "",
 			FormatFunc: func(obj *gabs.Container) string {
 				var ret string
+
 				if hasValue(obj, "encoding") {
 					ret = "rtpmap:%d %s/%d/%d"
 				} else {

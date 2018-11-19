@@ -3,11 +3,12 @@ package sdptransform
 import (
 	"fmt"
 	"testing"
+
+	"github.com/sanity-io/litter"
 )
 
 var sdpStr = `v=0
 o=- 20518 0 IN IP4 203.0.113.1
-s= 
 t=0 0
 c=IN IP4 203.0.113.1
 a=ice-ufrag:F7gI
@@ -165,12 +166,14 @@ func TestStruct(t *testing.T) {
 		t.Error(err)
 	}
 
+	litter.Dump(sdpStruct)
+
+	litter.Dump(sdpStruct.Groups)
+
 	rtp := sdpStruct.Media[0].Rtp[0]
 
 	if rtp.Codec != "PCMU" && rtp.Payload == 0 {
 		t.Error("can not parse payload")
 	}
 
-	t.Log("==========")
-	t.Log(sdpStruct)
 }

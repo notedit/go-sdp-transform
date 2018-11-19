@@ -21,5 +21,4 @@ func TestWrite(t *testing.T) {
 	}
 
 	fmt.Println(ret)
-
 }
